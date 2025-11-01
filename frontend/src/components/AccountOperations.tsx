@@ -12,6 +12,19 @@ const AccountOperations: React.FC = () => {
   const [depositAmount, setDepositAmount] = useState('');
   const [withdrawAmount, setWithdrawAmount] = useState('');
 
+  const generatePaymentId = () => {
+    // Tạo payment_id dạng UUID
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+    // Fallback UUID generation cho môi trường không hỗ trợ crypto.randomUUID
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  };
+
   const handleGetAccount = async () => {
     if (!accountId.trim()) {
       toast.error('Please enter an account ID');
@@ -22,7 +35,7 @@ const AccountOperations: React.FC = () => {
     try {
       const response = await BankAccountService.getAccount(accountId);
       if (response.success) {
-        setAccount(response.data);
+        setAccount(response.data || null);
         toast.success('Account loaded successfully');
       } else {
         toast.error(response.error?.message || 'Failed to get account');
@@ -42,11 +55,13 @@ const AccountOperations: React.FC = () => {
 
     setLoading(true);
     try {
+      const paymentId = generatePaymentId();
       const response = await BankAccountService.deposit(accountId, { 
-        amount: parseFloat(depositAmount) 
+        amount: parseFloat(depositAmount),
+        payment_id: paymentId
       });
       if (response.success) {
-        toast.success('Deposit successful');
+        toast.success(`Deposit successful (${parseFloat(depositAmount).toLocaleString('vi-VN')} VND - Payment ID: ${paymentId.slice(0, 8)}...)`);
         setDepositAmount('');
         // Refresh account data
         handleGetAccount();
@@ -68,11 +83,13 @@ const AccountOperations: React.FC = () => {
 
     setLoading(true);
     try {
+      const paymentId = generatePaymentId();
       const response = await BankAccountService.withdraw(accountId, { 
-        amount: parseFloat(withdrawAmount) 
+        amount: parseFloat(withdrawAmount),
+        payment_id: paymentId
       });
       if (response.success) {
-        toast.success('Withdrawal successful');
+        toast.success(`Withdrawal successful (${parseFloat(withdrawAmount).toLocaleString('vi-VN')} VND - Payment ID: ${paymentId.slice(0, 8)}...)`);
         setWithdrawAmount('');
         // Refresh account data
         handleGetAccount();
@@ -96,7 +113,7 @@ const AccountOperations: React.FC = () => {
     try {
       const response = await BankAccountService.getEventsHistory(accountId);
       if (response.success) {
-        setEvents(response.data);
+        setEvents(response.data || null);
         toast.success('Events loaded successfully');
       } else {
         toast.error(response.error?.message || 'Failed to get events');
@@ -149,18 +166,8 @@ const AccountOperations: React.FC = () => {
             <div>
               <p className="text-sm text-gray-500">Balance</p>
               <p className="font-medium text-2xl text-green-600">
-                ${account.balance.amount.toFixed(2)} {account.balance.currency}
+                {account.balance.amount.toLocaleString('vi-VN')} {account.balance.currency}
               </p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Status</p>
-              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                account.status === 'ACTIVE' 
-                  ? 'bg-green-100 text-green-800' 
-                  : 'bg-red-100 text-red-800'
-              }`}>
-                {account.status}
-              </span>
             </div>
           </div>
         </div>
@@ -177,12 +184,12 @@ const AccountOperations: React.FC = () => {
           <div className="space-y-4">
             <input
               type="number"
-              placeholder="Enter amount"
+              placeholder="Enter amount (VND)"
               value={depositAmount}
               onChange={(e) => setDepositAmount(e.target.value)}
               className="input-field"
               min="0"
-              step="0.01"
+              step="1000"
             />
             <button
               onClick={handleDeposit}
@@ -204,12 +211,12 @@ const AccountOperations: React.FC = () => {
           <div className="space-y-4">
             <input
               type="number"
-              placeholder="Enter amount"
+              placeholder="Enter amount (VND)"
               value={withdrawAmount}
               onChange={(e) => setWithdrawAmount(e.target.value)}
               className="input-field"
               min="0"
-              step="0.01"
+              step="1000"
             />
             <button
               onClick={handleWithdraw}

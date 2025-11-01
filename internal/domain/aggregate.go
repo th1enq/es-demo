@@ -41,7 +41,7 @@ func (a *BankAccountAggregate) When(event any) error {
 		a.BankAccount.Balance = evt.Balance
 		a.BankAccount.FirstName = evt.FirstName
 		a.BankAccount.LastName = evt.LastName
-		a.BankAccount.Status = evt.Status
+		a.BankAccount.PasswordHash = evt.PasswordHash
 		return nil
 
 	case *events.BalanceDepositedEventV1:
@@ -59,7 +59,6 @@ func (a *BankAccountAggregate) CreateBankAccount(
 	ctx context.Context,
 	email, firstName, lastName string,
 	amount int64,
-	status string,
 	password string, // Add password parameter
 ) error {
 	if amount < 0 {
@@ -73,11 +72,11 @@ func (a *BankAccountAggregate) CreateBankAccount(
 	}
 
 	event := &events.BankAccountCreatedEventV1{
-		Email:     email,
-		FirstName: firstName,
-		LastName:  lastName,
-		Balance:   money.New(amount, money.USD),
-		Status:    status,
+		Email:        email,
+		FirstName:    firstName,
+		LastName:     lastName,
+		Balance:      money.New(amount, money.VND),
+		PasswordHash: tempAccount.PasswordHash,
 	}
 
 	return a.Apply(event)
@@ -100,17 +99,13 @@ func (a *BankAccountAggregate) WithdrawBalance(ctx context.Context, amount int64
 		return errors.Wrapf(bankAccountErrors.ErrInvalidBalanceAmount, "amount: %d", amount)
 	}
 
-	balance, err := money.New(a.BankAccount.Balance.Amount(), money.USD).Subtract(money.New(amount, money.USD))
+	balance, err := money.New(a.BankAccount.Balance.Amount(), money.VND).Subtract(money.New(amount, money.VND))
 	if err != nil {
 		return errors.Wrapf(err, "Balance.Subtract amount: %d", amount)
 	}
 
 	if balance.IsNegative() {
 		return errors.Wrapf(bankAccountErrors.ErrNotEnoughBalance, "amount: %d", amount)
-	}
-
-	if err != nil {
-		return errors.Wrap(err, "serializer.Marshal")
 	}
 
 	event := &events.BalanceWithdrawedEventV1{

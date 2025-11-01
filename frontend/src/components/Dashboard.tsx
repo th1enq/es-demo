@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { 
   TrendingUp, 
   DollarSign, 
@@ -74,14 +74,14 @@ const Dashboard: React.FC = () => {
   const stats = [
     {
       title: 'Total Balance',
-      value: '$24,532.18',
+      value: '₫615,804,500',
       change: '+2.5%',
       isPositive: true,
       icon: <DollarSign className="text-primary-600" size={24} />,
     },
     {
       title: 'Monthly Income',
-      value: '$8,200.00',
+      value: '₫205,700,000',
       change: '+12.3%',
       isPositive: true,
       icon: <TrendingUp className="text-primary-600" size={24} />,
@@ -217,28 +217,28 @@ const Dashboard: React.FC = () => {
             <tbody>
               <tr className="border-b border-gray-100">
                 <td className="py-3 px-4 text-gray-900">Sales</td>
-                <td className="py-3 px-4 text-right text-gray-900">1,194.58</td>
-                <td className="py-3 px-4 text-right text-gray-900">11,418.29</td>
+                <td className="py-3 px-4 text-right text-gray-900">₫29,864,500</td>
+                <td className="py-3 px-4 text-right text-gray-900">₫286,457,250</td>
               </tr>
               <tr className="border-b border-gray-100">
                 <td className="py-3 px-4 text-gray-900">Advertising</td>
-                <td className="py-3 px-4 text-right text-gray-900">6,879.02</td>
-                <td className="py-3 px-4 text-right text-gray-900">9,271.36</td>
+                <td className="py-3 px-4 text-right text-gray-900">₫172,975,500</td>
+                <td className="py-3 px-4 text-right text-gray-900">₫232,784,000</td>
               </tr>
               <tr className="border-b border-gray-100">
                 <td className="py-3 px-4 text-gray-900">Inventory</td>
-                <td className="py-3 px-4 text-right text-gray-900">4,692.26</td>
-                <td className="py-3 px-4 text-right text-gray-900">9,768.09</td>
+                <td className="py-3 px-4 text-right text-gray-900">₫117,806,500</td>
+                <td className="py-3 px-4 text-right text-gray-900">₫245,202,250</td>
               </tr>
               <tr className="border-b border-gray-100">
                 <td className="py-3 px-4 text-gray-900">Entertainment</td>
-                <td className="py-3 px-4 text-right text-gray-900">0.00</td>
-                <td className="py-3 px-4 text-right text-gray-900">0.00</td>
+                <td className="py-3 px-4 text-right text-gray-900">₫0</td>
+                <td className="py-3 px-4 text-right text-gray-900">₫0</td>
               </tr>
               <tr>
                 <td className="py-3 px-4 text-gray-900">Product</td>
-                <td className="py-3 px-4 text-right text-gray-900">4,652.10</td>
-                <td className="py-3 px-4 text-right text-gray-900">2,529.90</td>
+                <td className="py-3 px-4 text-right text-gray-900">₫116,802,500</td>
+                <td className="py-3 px-4 text-right text-gray-900">₫63,497,500</td>
               </tr>
             </tbody>
           </table>

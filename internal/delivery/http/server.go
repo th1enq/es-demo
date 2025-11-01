@@ -21,20 +21,26 @@ type Config struct {
 }
 
 type httpServer struct {
-	cfg        Config
-	controller *Controller
-	logger     *zap.Logger
+	cfg            Config
+	controller     *Controller
+	authController *AuthController
+	authMiddleware *AuthMiddleware
+	logger         *zap.Logger
 }
 
 func NewHTTPServer(
 	cfg Config,
 	controller *Controller,
+	authController *AuthController,
+	authMiddleware *AuthMiddleware,
 	logger *zap.Logger,
 ) HTTPServer {
 	return &httpServer{
-		cfg:        cfg,
-		controller: controller,
-		logger:     logger,
+		cfg:            cfg,
+		controller:     controller,
+		authController: authController,
+		authMiddleware: authMiddleware,
+		logger:         logger,
 	}
 }
 
@@ -65,20 +71,29 @@ func (s *httpServer) RegisRouter() *gin.Engine {
 
 	apiV1 := router.Group("/api/v1")
 	{
+		// Authentication routes (public)
+		auth := apiV1.Group("/auth")
+		{
+			auth.POST("/register", s.authController.Register)
+			auth.POST("/login", s.authController.Login)
+			auth.POST("/refresh", s.authController.RefreshToken)
+			auth.POST("/logout", s.authMiddleware.JWTAuth(), s.authController.Logout)
+		}
 
-		// Public bank account creation (for registration)
-		apiV1.POST("/bank_accounts", s.controller.CreateBankAccount)
+		// Bank account routes
+		bankAccounts := apiV1.Group("/bank_accounts")
+		{
+			// Public routes (no authentication required)
+			bankAccounts.GET("/:id", s.controller.GetBankAccountByID)
+			bankAccounts.GET("/:id/events", s.controller.GetEventsHistory)
 
-		// Public bank account lookup (for testing)
-		apiV1.GET("/bank_accounts/:id", s.controller.GetBankAccountByID)
-
-		// Events history endpoint
-		apiV1.GET("/bank_accounts/:id/events", s.controller.GetEventsHistory)
-
-		// Temporarily make all operations public for testing
-		apiV1.POST("/bank_accounts/:id/deposite", s.controller.DepositeBalance)
-		apiV1.POST("/bank_accounts/:id/withdraw", s.controller.WithdrawBalance)
-
+			// Protected routes (authentication required)
+			protected := bankAccounts.Group("", s.authMiddleware.JWTAuth())
+			{
+				protected.POST("/:id/deposite", s.controller.DepositeBalance)
+				protected.POST("/:id/withdraw", s.controller.WithdrawBalance)
+			}
+		}
 	}
 
 	return router

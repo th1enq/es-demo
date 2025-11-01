@@ -13,11 +13,8 @@ type BankAccount struct {
 	FirstName   string       `json:"first_name"`
 	LastName    string       `json:"last_name"`
 	Balance     *money.Money `json:"balance"`
-	Status      string       `json:"status"`
 	// Authentication fields
-	PasswordHash string    `json:"-"` // Don't expose in JSON
-	Role         string    `json:"role"`
-	IsActive     bool      `json:"is_active"`
+	PasswordHash string    `json:"-"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }
@@ -27,9 +24,7 @@ func NewBankAccount(
 ) *BankAccount {
 	return &BankAccount{
 		AggregateID: id,
-		Balance:     money.New(0, "USD"),
-		Role:        "user", // Default role
-		IsActive:    true,   // Default active
+		Balance:     money.New(0, "VND"),
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}
@@ -52,7 +47,7 @@ func (b *BankAccount) CheckPassword(password string) error {
 }
 
 func (b *BankAccount) Deposit(amount int64) error {
-	result, err := b.Balance.Add(money.New(amount, money.USD))
+	result, err := b.Balance.Add(money.New(amount, money.VND))
 	if err != nil {
 		return err
 	}
@@ -61,7 +56,7 @@ func (b *BankAccount) Deposit(amount int64) error {
 }
 
 func (b *BankAccount) Withdraw(amount int64) error {
-	result, err := b.Balance.Subtract(money.New(amount, money.USD))
+	result, err := b.Balance.Subtract(money.New(amount, money.VND))
 	if err != nil {
 		return err
 	}

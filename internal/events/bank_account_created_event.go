@@ -7,10 +7,10 @@ const (
 )
 
 type BankAccountCreatedEventV1 struct {
-	Email     string       `json:"email"`
-	FirstName string       `json:"first_name"`
-	LastName  string       `json:"last_name"`
-	Balance   *money.Money `json:"balance"`
-	Status    string       `json:"status"`
-	Metadata  []byte       `json:"-"`
+	Email        string       `json:"email"`
+	FirstName    string       `json:"first_name"`
+	LastName     string       `json:"last_name"`
+	Balance      *money.Money `json:"balance"`
+	PasswordHash string       `json:"password_hash"` // Include in event serialization for event store
+	Metadata     []byte       `json:"-"`
 }

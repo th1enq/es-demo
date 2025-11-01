@@ -15,7 +15,6 @@ type CreateBankAccountCommand struct {
 	FirstName   string `json:"first_name" validate:"required,gte=0"`
 	LastName    string `json:"last_name" validate:"required,gte=0"`
 	Balance     int64  `json:"balance" validate:"required,gte=0"`
-	Status      string `json:"status"`
 	Password    string `json:"password" validate:"required,min=6"` // Add password field
 }
 
@@ -55,7 +54,6 @@ func (c *createBankAccount) Handle(ctx context.Context, cmd CreateBankAccountCom
 		cmd.FirstName,
 		cmd.LastName,
 		cmd.Balance,
-		cmd.Status,
 		cmd.Password, // Add password parameter
 	)
 	if err != nil {

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Edit, Eye, Trash2 } from 'lucide-react';
+import { Plus, Search, Eye } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { BankAccountService } from '../services/api';
 import type { BankAccount, CreateBankAccountRequest } from '../types';
 
 const AccountManagement: React.FC = () => {
-  const [accounts, setAccounts] = useState<BankAccount[]>([]);
+  const [_accounts, _setAccounts] = useState<BankAccount[]>([]);
   const [loading, setLoading] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -16,7 +16,6 @@ const AccountManagement: React.FC = () => {
     first_name: '',
     last_name: '',
     balance: 0,
-    status: 'ACTIVE',
     password: '',
   });
 
@@ -50,7 +49,6 @@ const AccountManagement: React.FC = () => {
           first_name: '',
           last_name: '',
           balance: 0,
-          status: 'ACTIVE',
           password: '',
         });
         loadAccounts();
@@ -156,20 +154,6 @@ const AccountManagement: React.FC = () => {
                   step="0.01"
                   required
                 />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <select
-                  name="status"
-                  value={formData.status}
-                  onChange={handleInputChange}
-                  className="input-field"
-                >
-                  <option value="ACTIVE">Active</option>
-                  <option value="INACTIVE">Inactive</option>
-                  <option value="SUSPENDED">Suspended</option>
-                </select>
               </div>
               
               <div>

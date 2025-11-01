@@ -83,9 +83,27 @@ func Initialize(ctx context.Context) (*Application, error) {
 		})
 
 	if err != nil && !utils.CheckErrForMessagesCaseInSensitive(err, serviceErrors.ErrMsgAlreadyExists) {
-		logger.Warn("Create One Collection Failed, Collection Already exist", zap.Error(err))
+		logger.Warn("Create Aggregate ID Index Failed, Index Already exist", zap.Error(err))
 	}
-	logger.Info("Created Index on MongoDB", zap.String("index", aggregateIdIndex))
+	logger.Info("Created Aggregate ID Index on MongoDB", zap.String("index", aggregateIdIndex))
+
+	// Create email index for authentication
+	emailIndexOptions := options.Index().
+		SetSparse(true).
+		SetUnique(true)
+
+	emailIndex, err := mongodb.Database(cfg.MongoDB.Db).
+		Collection(mongoBankAccountsCollection).
+		Indexes().
+		CreateOne(ctx, mongo.IndexModel{
+			Keys:    bson.D{{Key: "email", Value: 1}},
+			Options: emailIndexOptions,
+		})
+
+	if err != nil && !utils.CheckErrForMessagesCaseInSensitive(err, serviceErrors.ErrMsgAlreadyExists) {
+		logger.Warn("Create Email Index Failed, Index Already exist", zap.Error(err))
+	}
+	logger.Info("Created Email Index on MongoDB", zap.String("index", emailIndex))
 
 	list, err := mongodb.Database(cfg.MongoDB.Db).Collection(mongoBankAccountsCollection).
 		Indexes().
@@ -185,13 +203,33 @@ func Initialize(ctx context.Context) (*Application, error) {
 		mongoRepository,
 	)
 
+	// Create auth service
+	authService := service.NewAuthService(
+		bankService, // QueryService interface
+		bankService, // CommandBus interface
+		cfg.JWT.SecretKey,
+		logger,
+	)
+
 	controller := http.NewController(
 		bankService,
+	)
+
+	authController := http.NewAuthController(
+		authService,
+		logger,
+	)
+
+	authMiddleware := http.NewAuthMiddleware(
+		authService,
+		logger,
 	)
 
 	httpServer := http.NewHTTPServer(
 		cfg.Server,
 		controller,
+		authController,
+		authMiddleware,
 		logger,
 	)
 

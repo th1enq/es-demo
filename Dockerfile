@@ -50,9 +50,6 @@ WORKDIR /app
 # Copy binary from builder
 COPY --from=backend-builder /app/main .
 
-# Copy frontend build from frontend-builder
-COPY --from=frontend-builder /app/frontend/build ./web
-
 # Create logs directory
 RUN mkdir -p /app/logs
 

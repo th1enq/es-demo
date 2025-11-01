@@ -5,10 +5,7 @@ import {
   DollarSign, 
   Users, 
   FileText, 
-  UserCheck,
-  Search,
-  Bell,
-  User
+  Activity
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -22,7 +19,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
     { id: 'accounts', label: 'Accounts', icon: CreditCard },
     { id: 'payroll', label: 'Payroll', icon: DollarSign },
     { id: 'reports', label: 'Reports', icon: FileText },
-    { id: 'advisor', label: 'Advisor', icon: UserCheck },
+    { id: 'events', label: 'Events', icon: Activity },
     { id: 'contacts', label: 'Contacts', icon: Users },
   ];
 

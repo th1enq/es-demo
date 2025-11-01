@@ -16,7 +16,9 @@ func BankAccountToMongoProjection(bankAccount *domain.BankAccountAggregate) *dom
 			Amount:   bankAccount.BankAccount.Balance.AsMajorUnits(),
 			Currency: bankAccount.BankAccount.Balance.Currency().Code,
 		},
-		Status: bankAccount.BankAccount.Status,
+		PasswordHash: bankAccount.BankAccount.PasswordHash,
+		CreatedAt:    bankAccount.BankAccount.CreatedAt,
+		UpdatedAt:    bankAccount.BankAccount.UpdatedAt,
 	}
 }
 
@@ -27,6 +29,5 @@ func BankAccountMongoProjectionToHttp(bankAccount *domain.BankAccountMongoProjec
 		FirstName:   bankAccount.FirstName,
 		LastName:    bankAccount.LastName,
 		Balance:     bankAccount.Balance,
-		Status:      bankAccount.Status,
 	}
 }

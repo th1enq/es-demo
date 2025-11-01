@@ -12,4 +12,5 @@ type MongoRepository interface {
 	DeleteByAggregateID(ctx context.Context, aggregateID string) error
 	UpdateConcurrently(ctx context.Context, aggregateID string, updateCb UpdateProjectionCallback, expectedVersion uint64) error
 	GetByAggregateID(ctx context.Context, aggregateID string) (*BankAccountMongoProjection, error)
+	GetByEmail(ctx context.Context, email string) (*BankAccountMongoProjection, error)
 }

@@ -6,17 +6,20 @@ import (
 )
 
 type BankAccountQuery struct {
-	GetBankAccountByID GetBankAccountByID
-	GetEventsHistory   *GetEventsHistoryQueryHandler
+	GetBankAccountByID    GetBankAccountByID
+	GetBankAccountByEmail GetBankAccountByEmail
+	GetEventsHistory      *GetEventsHistoryQueryHandler
 }
 
 func NewBankAccountQuery(
 	getBankAccountByID GetBankAccountByID,
+	getBankAccountByEmail GetBankAccountByEmail,
 	aggregateStore es.AggregateStore,
 	log *zap.Logger,
 ) *BankAccountQuery {
 	return &BankAccountQuery{
-		GetBankAccountByID: getBankAccountByID,
-		GetEventsHistory:   NewGetEventsHistoryQueryHandler(aggregateStore, log),
+		GetBankAccountByID:    getBankAccountByID,
+		GetBankAccountByEmail: getBankAccountByEmail,
+		GetEventsHistory:      NewGetEventsHistoryQueryHandler(aggregateStore, log),
 	}
 }

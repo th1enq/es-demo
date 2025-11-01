@@ -64,12 +64,12 @@ func (b *bankAccountMongoProjection) onBankAccountCreated(ctx context.Context, e
 		FirstName:   event.FirstName,
 		LastName:    event.LastName,
 		Balance: domain.Balance{
-			Amount:   float64(event.Balance.Amount()),
+			Amount:   event.Balance.AsMajorUnits(),
 			Currency: event.Balance.Currency().Code,
 		},
-		Status:    event.Status,
-		UpdatedAt: time.Now().UTC(),
-		CreatedAt: time.Now().UTC(),
+		PasswordHash: event.PasswordHash,
+		UpdatedAt:    time.Now().UTC(),
+		CreatedAt:    time.Now().UTC(),
 	}
 
 	err := b.mongoRepository.Insert(ctx, projection)
@@ -86,7 +86,7 @@ func (b *bankAccountMongoProjection) onBankAccountBalanceDeposited(ctx context.C
 		ctx,
 		esEvent.GetAggregateID(),
 		func(projection *domain.BankAccountMongoProjection) *domain.BankAccountMongoProjection {
-			projection.Balance.Amount += float64(money.New(event.Amount, money.USD).Amount())
+			projection.Balance.Amount += float64(money.New(event.Amount, money.VND).Amount())
 			projection.Version = esEvent.Version
 			return projection
 		},
@@ -104,7 +104,7 @@ func (b *bankAccountMongoProjection) onBankAccountBalanceWithdrawed(ctx context.
 		ctx,
 		esEvent.GetAggregateID(),
 		func(projection *domain.BankAccountMongoProjection) *domain.BankAccountMongoProjection {
-			projection.Balance.Amount -= float64(money.New(event.Amount, money.USD).Amount())
+			projection.Balance.Amount -= float64(money.New(event.Amount, money.VND).Amount())
 			projection.Version = esEvent.Version
 			return projection
 		},

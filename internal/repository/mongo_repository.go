@@ -63,6 +63,21 @@ func (b *bankAccountMongoRepository) GetByAggregateID(ctx context.Context, aggre
 	return &projection, nil
 }
 
+// GetByEmail implements domain.MongoRepository.
+func (b *bankAccountMongoRepository) GetByEmail(ctx context.Context, email string) (*domain.BankAccountMongoProjection, error) {
+	b.logger.Info("Getting bank account by email", zap.String("email", email))
+	filter := bson.M{"email": email}
+	var projection domain.BankAccountMongoProjection
+
+	err := b.bankAccountsCollection().FindOne(ctx, filter).Decode(&projection)
+	if err != nil {
+		b.logger.Error("MongoDB find by email failed", zap.String("email", email), zap.Error(err))
+		return nil, errors.Wrapf(err, "[FindOne] email: %s", email)
+	}
+	b.logger.Info("Got bank account by email", zap.String("email", email))
+	return &projection, nil
+}
+
 // Update implements domain.MongoRepository.
 func (b *bankAccountMongoRepository) Update(ctx context.Context, projection *domain.BankAccountMongoProjection) error {
 	b.logger.Info("Updating bank account", zap.String("aggregateID", projection.AggregateID))
