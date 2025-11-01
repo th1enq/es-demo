@@ -1,0 +1,192 @@
+services:
+  # PostgreSQL Database - Event Store
+  postgres:
+    image: postgres:15-alpine
+    container_name: es-demo-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: es_demo
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - es-demo-network
+
+  # MongoDB - Projection Store
+  mongodb:
+    image: mongo:7
+    container_name: es-demo-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: rootpassword
+      MONGO_INITDB_DATABASE: es_demo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./scripts/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - es-demo-network
+
+  # Zookeeper - Required for Kafka
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: es-demo-zookeeper
+    restart: unless-stopped
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - es-demo-network
+
+  # Kafka - Event Streaming Platform
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: es-demo-kafka
+    restart: unless-stopped
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    networks:
+      - es-demo-network
+
+  # Kafka UI - Web interface for Kafka
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: es-demo-kafka-ui
+    restart: unless-stopped
+    depends_on:
+      - kafka
+    ports:
+      - "8082:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: es-demo-cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    networks:
+      - es-demo-network
+
+  # Mongo Express - MongoDB Web UI
+  mongo-express:
+    image: mongo-express:latest
+    container_name: es-demo-mongo-express
+    restart: unless-stopped
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: rootpassword
+      ME_CONFIG_MONGODB_URL: mongodb://root:rootpassword@mongodb:27017/
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin123
+    ports:
+      - "8081:8081"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - es-demo-network
+
+  # Go Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: es-demo-app
+    restart: unless-stopped
+    environment:
+      # Logger Config
+      LOGGER_LEVEL: info
+      LOGGER_FILE_PATH: ./logs/app.log
+      LOGGER_MAX_SIZE: 100
+      LOGGER_MAX_BACKUPS: 10
+      LOGGER_MAX_AGE: 30
+      
+      # PostgreSQL Config
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: password
+      DB_NAME: es_demo
+      
+      # Event Store Config
+      SNAPSHOT_FREQUENCY: 5
+      
+      # MongoDB Config
+      MONGODB_URI: mongodb://mongodb:27017
+      MONGODB_DATABASE: es_demo
+      MONGODB_USERNAME: appuser
+      MONGODB_PASSWORD: apppassword
+      
+      # Server Config
+      SERVER_HOST: 0.0.0.0
+      SERVER_PORT: 8080
+      
+      # Kafka Config
+      KAFKA_BROKERS: kafka:9092
+      KAFKA_GROUP_ID: bank_account_microservice_consumer
+      KAFKA_TOPIC_PREFIX: bank_account
+      KAFKA_PARTITIONS: 10
+      KAFKA_REPLICATION_FACTOR: 1
+      
+      # Projections Config
+      PROJECTION_MONGO_GROUP: mongoGroup
+      PROJECTION_MONGO_POOL_SIZE: 10
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - es-demo-network
+
+volumes:
+  postgres_data:
+    driver: local
+  mongodb_data:
+    driver: local
+  kafka_data:
+    driver: local
+  zookeeper_data:
+    driver: local
+
+networks:
+  es-demo-network:
+    driver: bridge

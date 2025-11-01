@@ -1,0 +1,447 @@
+basePath: /
+definitions:
+  auth.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  auth.LoginResponse:
+    properties:
+      expires_at:
+        type: string
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/auth.UserInfo'
+    type: object
+  auth.RegisterRequest:
+    properties:
+      email:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      password:
+        minLength: 6
+        type: string
+    required:
+    - email
+    - first_name
+    - last_name
+    - password
+    type: object
+  auth.UserInfo:
+    properties:
+      email:
+        type: string
+      first_name:
+        type: string
+      id:
+        type: string
+      last_name:
+        type: string
+      role:
+        type: string
+      username:
+        type: string
+    type: object
+  command.CreateBankAccountCommand:
+    properties:
+      balance:
+        minimum: 0
+        type: integer
+      email:
+        minLength: 0
+        type: string
+      first_name:
+        minLength: 0
+        type: string
+      id:
+        minLength: 0
+        type: string
+      last_name:
+        minLength: 0
+        type: string
+      password:
+        description: Add password field
+        minLength: 6
+        type: string
+      status:
+        type: string
+    required:
+    - balance
+    - email
+    - first_name
+    - id
+    - last_name
+    - password
+    type: object
+  command.DepositeBalanceCommand:
+    properties:
+      aggregate_id:
+        minLength: 0
+        type: string
+      amount:
+        type: integer
+      payment_id:
+        minLength: 0
+        type: string
+    required:
+    - aggregate_id
+    - amount
+    - payment_id
+    type: object
+  command.WithdrawBalanceCommand:
+    properties:
+      aggregate_id:
+        minLength: 0
+        type: string
+      amount:
+        type: integer
+      payment_id:
+        minLength: 0
+        type: string
+    required:
+    - aggregate_id
+    - amount
+    - payment_id
+    type: object
+  dto.APIResponse:
+    properties:
+      code:
+        type: string
+      data: {}
+      error:
+        $ref: '#/definitions/dto.ErrorInfo'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  dto.ErrorInfo:
+    properties:
+      code:
+        type: string
+      details: {}
+      message:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: Event Sourcing Demo API with Bank Account CQRS Pattern
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: Event Sourcing Demo API
+  version: "1.0"
+paths:
+  /api/v1/auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and return JWT token
+      parameters:
+      - description: Login Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/auth.LoginResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+      summary: User Login
+      tags:
+      - Authentication
+  /api/v1/auth/profile:
+    get:
+      consumes:
+      - application/json
+      description: Get current user profile information
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/auth.UserInfo'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+      security:
+      - Bearer: []
+      summary: Get User Profile
+      tags:
+      - Authentication
+  /api/v1/auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Refresh JWT token
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/auth.LoginResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+      security:
+      - Bearer: []
+      summary: Refresh Token
+      tags:
+      - Authentication
+  /api/v1/auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user account
+      parameters:
+      - description: Register Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+      summary: User Registration
+      tags:
+      - Authentication
+  /api/v1/bank_accounts:
+    post:
+      consumes:
+      - application/json
+      description: Create a new bank account
+      parameters:
+      - description: Create Bank Account Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/command.CreateBankAccountCommand'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+      summary: Create Bank Account
+      tags:
+      - BankAccount
+  /api/v1/bank_accounts/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve bank account details by ID
+      parameters:
+      - description: Bank Account ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Fetch data from event store (true/false)
+        in: query
+        name: from_event_store
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+      summary: Get Bank Account by ID
+      tags:
+      - BankAccount
+  /api/v1/bank_accounts/{id}/deposite:
+    post:
+      consumes:
+      - application/json
+      description: Deposite balance to bank account
+      parameters:
+      - description: Bank Account ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Deposite Balance Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/command.DepositeBalanceCommand'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+      summary: Deposite Balance
+      tags:
+      - BankAccount
+  /api/v1/bank_accounts/{id}/events:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all events for a specific bank account
+      parameters:
+      - description: Bank Account ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+      summary: Get Events History
+      tags:
+      - BankAccount
+  /api/v1/bank_accounts/{id}/withdraw:
+    post:
+      consumes:
+      - application/json
+      description: Withdraw balance from bank account
+      parameters:
+      - description: Bank Account ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Withdraw Balance Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/command.WithdrawBalanceCommand'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.APIResponse'
+      summary: Withdraw Balance
+      tags:
+      - BankAccount
+schemes:
+- http
+- https
+swagger: "2.0"
