@@ -178,6 +178,94 @@ func (p *pgEventStore) loadEvents(ctx context.Context, aggregate Aggregate) erro
 	return nil
 }
 
+func (p *pgEventStore) loadEventsIntoVersion(ctx context.Context, aggregate Aggregate, version uint64) error {
+	rows, err := p.db.Query(ctx, getEventsByVersionRangeQuery, aggregate.GetID(), 1, version)
+	if err != nil {
+		p.logger.Error("(Load Events) db.Query error", zap.Error(err))
+		return errors.Wrap(err, "db.Query")
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var event Event
+
+		if err := rows.Scan(
+			&event.EventID,
+			&event.AggregateID,
+			&event.AggregateType,
+			&event.EventType,
+			&event.Data,
+			&event.Version,
+			&event.Timestamp,
+			&event.Metadata,
+		); err != nil {
+			return errors.Wrap(err, "rows.Scan")
+		}
+
+		deserializedEvent, err := p.serializer.DeserializeEvent(event)
+		if err != nil {
+			p.logger.Error("(Load Events) serializer.DeserializeEvent error", zap.Error(err))
+			return errors.Wrap(err, "serializer.DeserializeEvent")
+		}
+
+		if err := aggregate.RaiseEvent(deserializedEvent); err != nil {
+			p.logger.Error("(Load Events) RaiseEvent error", zap.Error(err))
+			return errors.Wrap(err, "RaiseEvent")
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		p.logger.Error("(Load Events) rows.Err error", zap.Error(err))
+		return errors.Wrap(err, "rows.Err")
+	}
+
+	return nil
+}
+
+func (p *pgEventStore) loadAggregateEventsByVersionRange(ctx context.Context, aggregate Aggregate, versionFrom, versionTo uint64) error {
+	rows, err := p.db.Query(ctx, getEventsByVersionRangeQuery, aggregate.GetID(), versionFrom, versionTo)
+	if err != nil {
+		p.logger.Error("(Load Events) db.Query error", zap.Error(err))
+		return errors.Wrap(err, "db.Query")
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var event Event
+
+		if err := rows.Scan(
+			&event.EventID,
+			&event.AggregateID,
+			&event.AggregateType,
+			&event.EventType,
+			&event.Data,
+			&event.Version,
+			&event.Timestamp,
+			&event.Metadata,
+		); err != nil {
+			return errors.Wrap(err, "rows.Scan")
+		}
+
+		deserializedEvent, err := p.serializer.DeserializeEvent(event)
+		if err != nil {
+			p.logger.Error("(Load Events) serializer.DeserializeEvent error", zap.Error(err))
+			return errors.Wrap(err, "serializer.DeserializeEvent")
+		}
+
+		if err := aggregate.RaiseEvent(deserializedEvent); err != nil {
+			p.logger.Error("(Load Events) RaiseEvent error", zap.Error(err))
+			return errors.Wrap(err, "RaiseEvent")
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		p.logger.Error("(Load Events) rows.Err error", zap.Error(err))
+		return errors.Wrap(err, "rows.Err")
+	}
+
+	return nil
+}
+
 // Exists check for exists aggregate by id
 func (p *pgEventStore) Exists(ctx context.Context, aggregateID string) (bool, error) {
 	var id string

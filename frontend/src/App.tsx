@@ -5,6 +5,7 @@ import Dashboard from './components/Dashboard';
 import AccountInfo from './components/AccountInfo';
 import Payroll from './components/Payroll';
 import Events from './components/Events';
+import Reports from './components/Reports';
 import Login from './components/Login';
 import Register from './components/Register';
 
@@ -117,7 +118,7 @@ function App() {
       case 'payroll':
         return <Payroll />;
       case 'reports':
-        return <div className="p-6"><h2 className="text-2xl font-semibold">Reports - Coming Soon</h2></div>;
+        return <Reports />;
       case 'events':
         return <Events />;
       case 'contacts':

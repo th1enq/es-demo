@@ -1,46 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { BankAccountService } from '../services/api';
 import type { EventsHistoryResponse, EventResponse } from '../types';
-import { Activity, Database, RefreshCw, Eye, Clock, Download } from 'lucide-react';
-import { exportTransactionsToCSV } from '../utils/csvExport';
+import { Activity, Database, RefreshCw, Eye, Clock } from 'lucide-react';
+import CSVViewer from './CSVViewer';
 
 const Events: React.FC = () => {
   const [events, setEvents] = useState<EventsHistoryResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<EventResponse | null>(null);
-  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     loadEvents();
-    
-    // Auto-reload every 5 seconds for real-time updates
-    const interval = setInterval(() => {
-      loadEvents();
-    }, 5000);
-
-    return () => clearInterval(interval);
   }, []);
-
-  const handleExportCSV = () => {
-    if (!events || events.events.length === 0) {
-      return;
-    }
-
-    try {
-      setIsExporting(true);
-      exportTransactionsToCSV(events.events, events.aggregate_id);
-      
-      // Close any open event details
-      setTimeout(() => {
-        setSelectedEvent(null);
-      }, 100);
-    } catch (error) {
-      console.error('Export error:', error);
-    } finally {
-      setIsExporting(false);
-    }
-  };
 
   const loadEvents = async () => {
     try {
@@ -197,18 +169,6 @@ const Events: React.FC = () => {
         </div>
         
         <div className="flex items-center space-x-3">
-          {/* Export CSV Button */}
-          {events && events.events.length > 0 && (
-            <button
-              onClick={handleExportCSV}
-              disabled={isExporting}
-              className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
-            >
-              <Download className={`h-4 w-4 ${isExporting ? 'animate-pulse' : ''}`} />
-              <span>{isExporting ? 'Exporting...' : 'Export CSV'}</span>
-            </button>
-          )}
-          
           <button
             onClick={loadEvents}
             disabled={loading}
@@ -285,7 +245,7 @@ const Events: React.FC = () => {
             
             {/* Additional Info */}
             <div className="mt-4 pt-4 border-t border-gray-200">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm font-medium text-gray-500">Account ID</p>
                   <p className="text-sm font-mono text-gray-900 truncate">{events.aggregate_id}</p>
@@ -299,18 +259,13 @@ const Events: React.FC = () => {
                     }
                   </p>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Export Options</p>
-                  <button
-                    onClick={handleExportCSV}
-                    disabled={isExporting || events.events.length === 0}
-                    className="text-sm px-3 py-1 bg-green-100 text-green-700 rounded-full hover:bg-green-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isExporting ? 'Exporting...' : 'Download CSV'}
-                  </button>
-                </div>
               </div>
             </div>
+          </div>
+
+          {/* CSV Viewer */}
+          <div className="mb-6">
+            <CSVViewer events={events.events} accountId={events.aggregate_id} />
           </div>
 
           {/* Events List */}

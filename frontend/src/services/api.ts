@@ -123,6 +123,11 @@ export class BankAccountService {
     const response = await api.get(`/bank_accounts/${id}/events`);
     return response.data;
   }
+
+  static async getAccountByVersion(id: string, version: number): Promise<APIResponse<BankAccount>> {
+    const response = await api.get(`/bank_accounts/${id}/version/${version}`);
+    return response.data;
+  }
 }
 
 export default api;

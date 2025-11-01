@@ -51,6 +51,10 @@ func NewBankAccountService(
 			mongoRepository,
 			logger,
 		),
+		query.NewGetBankAccountByVersionQuery(
+			aggregateStore,
+			logger,
+		),
 		aggregateStore,
 		logger,
 	)

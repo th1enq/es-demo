@@ -7,6 +7,8 @@ type AggregateStore interface {
 	// Load loads the most recent version of an aggregate to provided  into params aggregate with a type and id.
 	Load(ctx context.Context, aggregate Aggregate) error
 
+	LoadByVersion(ctx context.Context, aggregate Aggregate, version uint64) error
+
 	// Save saves the uncommitted events for an aggregate.
 	Save(ctx context.Context, aggregate Aggregate) error
 
@@ -33,4 +35,7 @@ type SnapshotStore interface {
 
 	// GetSnapshot load aggregate snapshot.
 	GetSnapshot(ctx context.Context, id string) (*Snapshot, error)
+
+	// GetSnapshotByVersion load aggregate snapshot by version.
+	GetSnapshotByVersion(ctx context.Context, id string, version uint64) (*Snapshot, error)
 }

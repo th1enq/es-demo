@@ -7,6 +7,7 @@ export interface BankAccount {
     amount: number;
     currency: string;
   };
+  updated_at?: string;
 }
 
 export interface User {

@@ -85,6 +85,7 @@ func (s *httpServer) RegisRouter() *gin.Engine {
 		{
 			// Public routes (no authentication required)
 			bankAccounts.GET("/:id", s.controller.GetBankAccountByID)
+			bankAccounts.GET("/:id/version/:version", s.controller.GetBankAccountByVersion)
 			bankAccounts.GET("/:id/events", s.controller.GetEventsHistory)
 
 			// Protected routes (authentication required)

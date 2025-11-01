@@ -40,6 +40,41 @@ func (p *pgEventStore) Load(ctx context.Context, aggregate Aggregate) error {
 	return nil
 }
 
+func (p *pgEventStore) LoadByVersion(ctx context.Context, aggregate Aggregate, version uint64) error {
+	p.logger.Info("Loading aggregate", zap.String("aggregateID", aggregate.String()), zap.Uint64("version", version))
+
+	snapshotVersion := version / p.cfg.SnapshotFrequency * p.cfg.SnapshotFrequency
+
+	snapshot, err := p.GetSnapshotByVersion(ctx, aggregate.GetID(), snapshotVersion)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return err
+	}
+
+	if snapshot != nil {
+		if err := serializer.Unmarshal(snapshot.State, aggregate); err != nil {
+			p.logger.Error("(Load) serializer.Unmarshal failed", zap.Error(err))
+			return errors.Wrap(err, "json.Unmarshal")
+		}
+
+		if snapshot.Version < version {
+			err := p.loadAggregateEventsByVersionRange(ctx, aggregate, snapshot.Version+1, version)
+			if err != nil {
+				return err
+			}
+		}
+		p.logger.Debug("Load Aggregate By Version", zap.String("aggregate", aggregate.String()))
+		return nil
+	}
+
+	err = p.loadEventsIntoVersion(ctx, aggregate, version)
+	if err != nil {
+		return err
+	}
+
+	p.logger.Debug("Load Aggregate successfully", zap.String("aggregate", aggregate.String()))
+	return nil
+}
+
 // Save es.Aggregate events using snapshots with given frequency
 func (p *pgEventStore) Save(ctx context.Context, aggregate Aggregate) (err error) {
 	if len(aggregate.GetChanges()) == 0 {

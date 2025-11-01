@@ -37,3 +37,15 @@ func (p *pgEventStore) GetSnapshot(ctx context.Context, id string) (*Snapshot, e
 
 	return &snapshot, nil
 }
+
+func (p *pgEventStore) GetSnapshotByVersion(ctx context.Context, id string, version uint64) (*Snapshot, error) {
+	p.logger.Info("Get Snapshot By Version", zap.String("aggregateID", id), zap.Uint64("version", version))
+	var snapshot Snapshot
+	if err := p.db.QueryRow(ctx, getSnapshotByVersionQuery, id, version).Scan(&snapshot.ID, &snapshot.Type, &snapshot.State, &snapshot.Version); err != nil {
+		p.logger.Error("(Get Snapshot By Version) db.QueryRow error", zap.Error(err))
+		return nil, errors.Wrap(err, "db.QueryRow")
+	}
+	p.logger.Info("Get Snapshot By Version successfully", zap.String("snapshot", snapshot.String()))
+
+	return &snapshot, nil
+}

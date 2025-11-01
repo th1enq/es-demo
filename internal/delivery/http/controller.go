@@ -250,6 +250,64 @@ func (b *Controller) GetBankAccountByID(c *gin.Context) {
 	))
 }
 
+// GetBankAccountByVersion godoc
+// @Summary      Get Bank Account by Version
+// @Description  Retrieve bank account state at a specific version
+// @Tags         BankAccount
+// @Accept       json
+// @Produce      json
+// @Param        id      path      string  true  "Bank Account ID"
+// @Param        version path      string  true  "Version number"
+// @Success      200     {object}  dto.APIResponse
+// @Failure      400     {object}  dto.APIResponse
+// @Failure      500     {object}  dto.APIResponse
+// @Router       /api/v1/bank_accounts/{id}/version/{version} [get]
+func (b *Controller) GetBankAccountByVersion(c *gin.Context) {
+	var query query.GetBankAccountByVersionQuery
+
+	query.AggregateID = c.Param(constants.ID)
+
+	versionStr := c.Param("version")
+	version, err := strconv.ParseUint(versionStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dto.NewErrorResponse(
+			dto.CodeBadRequest,
+			"invalid version parameter",
+			err.Error(),
+		))
+		return
+	}
+	query.Version = version
+
+	if err := b.validator.StructCtx(c, query); err != nil {
+		c.JSON(http.StatusBadRequest, dto.NewErrorResponse(
+			dto.CodeBadRequest,
+			"invalid request",
+			err.Error(),
+		))
+		return
+	}
+
+	result, err := b.BankAccountService.Query.GetBankAccountByVersion.Handle(
+		c,
+		query,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dto.NewErrorResponse(
+			dto.CodeInternalServerError,
+			"failed to get bank account by version",
+			err.Error(),
+		))
+		return
+	}
+
+	c.JSON(http.StatusOK, dto.NewSuccessResponse(
+		dto.CodeSuccess,
+		"bank account at version retrieved successfully",
+		mappers.BankAccountMongoProjectionToHttp(result),
+	))
+}
+
 // GetEventsHistory godoc
 // @Summary      Get Events History
 // @Description  Retrieve all events for a specific bank account
