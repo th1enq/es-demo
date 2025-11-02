@@ -488,6 +488,45 @@ func (p *pgEventStore) processEvents(ctx context.Context, events []Event) error 
 	return p.eventBus.ProcessEvents(ctx, events)
 }
 
+// GetAllEvents load all events from the event store for replay purposes
+func (p *pgEventStore) GetAllEvents(ctx context.Context) ([]Event, error) {
+	rows, err := p.db.Query(ctx, getAllEventsQuery)
+	if err != nil {
+		p.logger.Error("(Get All Events) db.Query error", zap.Error(err))
+		return nil, errors.Wrap(err, "db.Query")
+	}
+	defer rows.Close()
+
+	events := make([]Event, 0)
+
+	for rows.Next() {
+		var event Event
+		if err := rows.Scan(
+			&event.EventID,
+			&event.AggregateID,
+			&event.AggregateType,
+			&event.EventType,
+			&event.Data,
+			&event.Version,
+			&event.Timestamp,
+			&event.Metadata,
+		); err != nil {
+			p.logger.Error("(Get All Events) rows.Scan error", zap.Error(err))
+			return nil, errors.Wrap(err, "rows.Scan")
+		}
+
+		events = append(events, event)
+	}
+
+	if err := rows.Err(); err != nil {
+		p.logger.Error("(Get All Events) rows.Err error", zap.Error(err))
+		return nil, errors.Wrap(err, "rows.Err")
+	}
+
+	p.logger.Info("(Get All Events) loaded events", zap.Int("count", len(events)))
+	return events, nil
+}
+
 func RollBackTx(ctx context.Context, tx pgx.Tx, err error) error {
 	if err := tx.Rollback(ctx); err != nil {
 		return errors.Wrap(err, "tx.Rollback")

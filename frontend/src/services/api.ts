@@ -5,7 +5,11 @@ import type {
   CreateBankAccountRequest, 
   DepositRequest, 
   WithdrawRequest,
-  EventsHistoryResponse 
+  EventsHistoryResponse,
+  ReplayResult,
+  ElasticsearchAccount,
+  AccountSummary,
+  SystemSummary
 } from '../types';
 
 const api = axios.create({
@@ -126,6 +130,41 @@ export class BankAccountService {
 
   static async getAccountByVersion(id: string, version: number): Promise<APIResponse<BankAccount>> {
     const response = await api.get(`/bank_accounts/${id}/version/${version}`);
+    return response.data;
+  }
+}
+
+export class ReplayService {
+  static async replayAllEvents(recreateIndex = false): Promise<APIResponse<ReplayResult>> {
+    const response = await api.post('/replay/events', {}, {
+      params: { recreate_index: recreateIndex }
+    });
+    return response.data;
+  }
+
+  static async getAccountFromElasticsearch(id: string): Promise<APIResponse<ElasticsearchAccount>> {
+    const response = await api.get(`/replay/accounts/${id}`);
+    return response.data;
+  }
+
+  static async searchAccountsInElasticsearch(filters: {
+    email?: string;
+    firstName?: string;
+    lastName?: string;
+    status?: string;
+  } = {}): Promise<APIResponse<{ accounts: ElasticsearchAccount[]; total: number }>> {
+    const response = await api.get('/replay/accounts/search', { params: filters });
+    return response.data;
+  }
+
+  static async getSystemSummary(): Promise<APIResponse<SystemSummary>> {
+    const response = await api.get('/replay/summary');
+    return response.data;
+  }
+
+  static async deleteElasticsearchIndex(): Promise<APIResponse> {
+    // This endpoint doesn't exist yet, but we can implement it
+    const response = await api.delete('/replay/index');
     return response.data;
   }
 }

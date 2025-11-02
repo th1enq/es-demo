@@ -95,6 +95,17 @@ func (s *httpServer) RegisRouter() *gin.Engine {
 				protected.POST("/:id/withdraw", s.controller.WithdrawBalance)
 			}
 		}
+
+		// Replay routes for Event Sourcing demonstration
+		replay := apiV1.Group("/replay")
+		{
+			// Public routes for demonstration purposes
+			replay.POST("/events", s.controller.ReplayAllEvents)
+			replay.GET("/accounts/:id", s.controller.GetAccountFromElasticsearch)
+			replay.GET("/accounts/search", s.controller.SearchAccountsInElasticsearch)
+			replay.GET("/summary", s.controller.GetAccountSummary)
+			replay.DELETE("/index", s.controller.DeleteElasticsearchIndex)
+		}
 	}
 
 	return router

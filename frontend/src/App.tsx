@@ -6,6 +6,7 @@ import AccountInfo from './components/AccountInfo';
 import Payroll from './components/Payroll';
 import Events from './components/Events';
 import Reports from './components/Reports';
+import Replay from './components/Replay';
 import Login from './components/Login';
 import Register from './components/Register';
 
@@ -102,6 +103,8 @@ function App() {
         return 'Reports';
       case 'events':
         return 'Events History';
+      case 'replay':
+        return 'Event Sourcing Replay';
       case 'contacts':
         return 'Contacts';
       default:
@@ -121,6 +124,8 @@ function App() {
         return <Reports />;
       case 'events':
         return <Events />;
+      case 'replay':
+        return <Replay />;
       case 'contacts':
         return <div className="p-6"><h2 className="text-2xl font-semibold">Contacts - Coming Soon</h2></div>;
       default:

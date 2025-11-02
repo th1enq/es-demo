@@ -91,3 +91,53 @@ export interface EventsHistoryResponse {
   total_events: number;
   events: EventResponse[];
 }
+
+// Replay and Elasticsearch types
+export interface ElasticsearchAccount {
+  aggregateId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  balance: {
+    amount: number;
+    currency: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+  version: number;
+  totalDeposits: number;
+  totalWithdrawals: number;
+  transactionCount: number;
+  status: string;
+  lastActivity: string;
+}
+
+export interface AccountSummary {
+  aggregateId: string;
+  email: string;
+  fullName: string;
+  balance: number;
+  transactionCount: number;
+  lastActivity: string;
+}
+
+export interface ReplayResult {
+  totalEvents: number;
+  processedEvents: number;
+  createdAccounts: number;
+  updatedAccounts: number;
+  duration: number;
+  errors?: string[];
+  accountSummaries: AccountSummary[];
+}
+
+export interface SystemSummary {
+  totalAccounts: number;
+  activeAccounts: number;
+  totalBalance: number;
+  totalDeposits: number;
+  totalWithdrawals: number;
+  totalTransactions: number;
+  netFlow: number;
+  averageBalance: number;
+}

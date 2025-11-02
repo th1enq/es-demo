@@ -5,6 +5,7 @@ import (
 	"net"
 	"strconv"
 
+	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/segmentio/kafka-go"
 	"github.com/th1enq/es-demo/config"
 	"github.com/th1enq/es-demo/internal/delivery/http"
@@ -203,6 +204,43 @@ func Initialize(ctx context.Context) (*Application, error) {
 		mongoRepository,
 	)
 
+	// Initialize Elasticsearch client
+	elasticsearchConfig := elasticsearch.Config{
+		Addresses: []string{
+			"http://localhost:9200", // Default for local development
+		},
+	}
+
+	// Check if environment variable is set for Elasticsearch URL
+	if cfg.Elasticsearch.URL != "" {
+		elasticsearchConfig.Addresses = []string{cfg.Elasticsearch.URL}
+	}
+
+	esClient, err := elasticsearch.NewClient(elasticsearchConfig)
+	if err != nil {
+		logger.Error("Failed to create Elasticsearch client", zap.Error(err))
+		return nil, err
+	}
+
+	// Test Elasticsearch connection
+	esInfo, err := esClient.Info()
+	if err != nil {
+		logger.Warn("Failed to connect to Elasticsearch - replay functionality will be limited", zap.Error(err))
+	} else {
+		logger.Info("Successfully connected to Elasticsearch", zap.String("response", esInfo.String()))
+	}
+
+	// Create Elasticsearch repository
+	esRepository := repository.NewElasticsearchRepository(esClient, logger)
+
+	// Create replay service
+	replayService := service.NewReplayService(
+		esStore,
+		esRepository,
+		serializer,
+		logger,
+	)
+
 	// Create auth service
 	authService := service.NewAuthService(
 		bankService, // QueryService interface
@@ -213,6 +251,7 @@ func Initialize(ctx context.Context) (*Application, error) {
 
 	controller := http.NewController(
 		bankService,
+		replayService,
 	)
 
 	authController := http.NewAuthController(

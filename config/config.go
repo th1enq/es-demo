@@ -18,6 +18,10 @@ type JWTConfig struct {
 	Issuer        string        `json:"issuer"`
 }
 
+type ElasticsearchConfig struct {
+	URL string `json:"url"`
+}
+
 type Config struct {
 	Logger               logger.Config
 	Postgres             postgres.Config
@@ -25,6 +29,7 @@ type Config struct {
 	MongoDB              mongodb.Config
 	Server               http.Config
 	JWT                  JWTConfig
+	Elasticsearch        ElasticsearchConfig
 	KafkaPublisherConfig es.KafkaEventsBusConfig
 	Kafka                *kafkaClient.Config
 	Projections          Projections
@@ -127,6 +132,12 @@ func Load() *Config {
 		MongoSubscriptionPoolSize: viper.GetInt("PROJECTION_MONGO_POOL_SIZE"),
 	}
 
+	// Elasticsearch Configuration
+	viper.SetDefault("ELASTICSEARCH_URL", "http://localhost:9200")
+	elasticsearchEnv := ElasticsearchConfig{
+		URL: viper.GetString("ELASTICSEARCH_URL"),
+	}
+
 	return &Config{
 		Logger:               loggerEnv,
 		Postgres:             postgresEnv,
@@ -134,6 +145,7 @@ func Load() *Config {
 		MongoDB:              mongoDBEnv,
 		Server:               serverEnv,
 		JWT:                  jwtEnv,
+		Elasticsearch:        elasticsearchEnv,
 		Kafka:                kafkaEnv,
 		KafkaPublisherConfig: kafkaPublisherEnv,
 		Projections:          projectionsEnv,

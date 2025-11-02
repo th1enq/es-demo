@@ -118,6 +118,51 @@ services:
     networks:
       - es-demo-network
 
+  # Elasticsearch - Search and Analytics Engine for Replay Demo
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: es-demo-elasticsearch
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.security.enrollment.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - http.cors.enabled=true
+      - http.cors.allow-origin="*"
+      - http.cors.allow-headers=X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization
+      - http.cors.allow-credentials=true
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl --silent --fail localhost:9200 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    networks:
+      - es-demo-network
+
+  # Kibana - Elasticsearch Dashboard
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    container_name: es-demo-kibana
+    restart: unless-stopped
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - xpack.security.enabled=false
+      - xpack.encryptedSavedObjects.encryptionKey=fhjsunfkjdsahjfkdsahjfkdsahjfkdsahjfkdsahjfkdsa
+    ports:
+      - "5601:5601"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - es-demo-network
+
   # Go Application
   app:
     build:
@@ -160,6 +205,9 @@ services:
       KAFKA_PARTITIONS: 10
       KAFKA_REPLICATION_FACTOR: 1
       
+      # Elasticsearch Config
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      
       # Projections Config
       PROJECTION_MONGO_GROUP: mongoGroup
       PROJECTION_MONGO_POOL_SIZE: 10
@@ -172,6 +220,8 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
     volumes:
       - ./logs:/app/logs
     networks:
@@ -181,6 +231,8 @@ volumes:
   postgres_data:
     driver: local
   mongodb_data:
+    driver: local
+  elasticsearch_data:
     driver: local
   kafka_data:
     driver: local

@@ -26,6 +26,9 @@ type EventStore interface {
 
 	// LoadEvents loads all events for the Aggregate id from the store.
 	LoadEvents(ctx context.Context, aggregateID string) ([]Event, error)
+
+	// GetAllEvents loads all events from the store for replay purposes.
+	GetAllEvents(ctx context.Context) ([]Event, error)
 }
 
 // SnapshotStore is an interface for an event sourcing Snapshot store.

@@ -15,6 +15,9 @@ const (
 	getEventsByVersionRangeQuery = `SELECT event_id, aggregate_id, aggregate_type, event_type, data, version, timestamp, metadata 
 	FROM microservices.events e WHERE aggregate_id = $1 AND version BETWEEN $2 AND $3 ORDER BY version ASC`
 
+	getAllEventsQuery = `SELECT event_id, aggregate_id, aggregate_type, event_type, data, version, timestamp, metadata 
+	FROM microservices.events e ORDER BY timestamp ASC, version ASC`
+
 	saveSnapshotQuery = `INSERT INTO microservices.snapshots (aggregate_id, aggregate_type, data, version, timestamp)
 		VALUES ($1, $2, $3, $4, now())
 		ON CONFLICT (aggregate_id, version)

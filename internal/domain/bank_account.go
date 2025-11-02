@@ -14,7 +14,7 @@ type BankAccount struct {
 	LastName    string       `json:"last_name"`
 	Balance     *money.Money `json:"balance"`
 	// Authentication fields
-	PasswordHash string    `json:"-"`
+	PasswordHash string    `json:"password_hash"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }
